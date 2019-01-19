@@ -132,7 +132,7 @@ void wideStrings() {
     hex_print(u8str);
     cout << endl;
 
-    // however it doesn't work with surrogate pairs
+    // however it doesn't work with surrogate pairs?????
     try {
         wstr = L"\U00101234";
         printWChars(wstr);
