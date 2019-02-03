@@ -6,8 +6,6 @@
 #include <codecvt>
 #include <iomanip>
 
-void rawString();
-void wideStrings();
 using namespace std;
 
 bool isLittleEndian() {
@@ -27,55 +25,6 @@ bool isLittleEndian() {
         assert(false);
         return -1;
     }
-}
-
-int main() {
-    wideStrings();
-    rawString();
-
-    const char *normal = "è"; // based on file encoding
-    const char *extendedCharacter = "\u00E5"; // implementation specific
-
-    // a standard unicode character is in range 000000-10FFFF
-
-    const char *utf8 = u8"\u00E5"; // implementation specific
-    assert(utf8[0] == (char) 0xc3);
-    assert(utf8[1] == (char) 0xa5);
-    assert(utf8[2] == 0);
-
-    const char16_t *utf16 = u"\u1234\u89ab"; // utf16 encoding
-    assert(utf16[0] == (char16_t) 0x1234);
-    assert(utf16[1] == (char16_t) 0x89ab);
-    assert(utf16[2] == 0);
-
-    if (isLittleEndian()) {
-        const char *utf16_c = (char *) utf16;
-        assert(utf16_c[0] == (char) 0x34);
-        assert(utf16_c[1] == (char) 0x12);
-        assert(utf16_c[2] == (char) 0xab);
-        assert(utf16_c[3] == (char) 0x89);
-        assert(utf16_c[4] == 0);
-    } else {
-        const char *utf16_c = (char *) utf16;
-        assert(utf16_c[0] == (char) 0x12);
-        assert(utf16_c[1] == (char) 0x34);
-        assert(utf16_c[2] == (char) 0x89);
-        assert(utf16_c[3] == (char) 0xab);
-        assert(utf16_c[4] == 0);
-    }
-
-    // an utf-16 character can occupy 2 spaces
-    utf16 = u"\U00101234";
-    assert(utf16[0] == (char16_t) 0xdbc4);
-    assert(utf16[1] == (char16_t) 0xde34);
-    assert(utf16[2] == 0);
-    // unicode 0x00101234 is in fact splitted into surrogate pair 0xdbc4 and 0xde34
-    // see http://www.russellcottrell.com/greek/utilities/surrogatepaircalculator.htm
-
-    // an utf-16 character can occupy 2 characters
-    const char32_t *utf32 = U"\U00101234";
-    assert(utf32[0] == (char32_t) 0x00101234);
-    assert(utf32[1] == 0);
 }
 
 void rawString() {
@@ -143,4 +92,53 @@ void wideStrings() {
         cout << "Cannot convert a surrogate pair: " << e.what() << endl;
     }
     cout << endl;
+}
+
+int main() {
+    wideStrings();
+    rawString();
+
+    const char *normal = "è"; // based on file encoding
+    const char *extendedCharacter = "\u00E5"; // implementation specific
+
+    // a standard unicode character is in range 000000-10FFFF
+
+    const char *utf8 = u8"\u00E5"; // implementation specific
+    assert(utf8[0] == (char) 0xc3);
+    assert(utf8[1] == (char) 0xa5);
+    assert(utf8[2] == 0);
+
+    const char16_t *utf16 = u"\u1234\u89ab"; // utf16 encoding
+    assert(utf16[0] == (char16_t) 0x1234);
+    assert(utf16[1] == (char16_t) 0x89ab);
+    assert(utf16[2] == 0);
+
+    if (isLittleEndian()) {
+        const char *utf16_c = (char *) utf16;
+        assert(utf16_c[0] == (char) 0x34);
+        assert(utf16_c[1] == (char) 0x12);
+        assert(utf16_c[2] == (char) 0xab);
+        assert(utf16_c[3] == (char) 0x89);
+        assert(utf16_c[4] == 0);
+    } else {
+        const char *utf16_c = (char *) utf16;
+        assert(utf16_c[0] == (char) 0x12);
+        assert(utf16_c[1] == (char) 0x34);
+        assert(utf16_c[2] == (char) 0x89);
+        assert(utf16_c[3] == (char) 0xab);
+        assert(utf16_c[4] == 0);
+    }
+
+    // an utf-16 character can occupy 2 spaces
+    utf16 = u"\U00101234";
+    assert(utf16[0] == (char16_t) 0xdbc4);
+    assert(utf16[1] == (char16_t) 0xde34);
+    assert(utf16[2] == 0);
+    // unicode 0x00101234 is in fact splitted into surrogate pair 0xdbc4 and 0xde34
+    // see http://www.russellcottrell.com/greek/utilities/surrogatepaircalculator.htm
+
+    // an utf-16 character can occupy 2 characters
+    const char32_t *utf32 = U"\U00101234";
+    assert(utf32[0] == (char32_t) 0x00101234);
+    assert(utf32[1] == 0);
 }

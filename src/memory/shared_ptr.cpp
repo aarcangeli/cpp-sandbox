@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <cassert>
 
 class TestClass {
     char i = 0;
@@ -17,23 +18,10 @@ public:
     }
 
     void foo() {
+        assert(this);
         printf("  # %c->foo();\n", i);
     }
 };
-
-void shared_ptr_standard();
-void shared_ptr_multi();
-void shared_ptr_and_unique_ptr();
-void shared_ptr_and_heap();
-
-int main() {
-    shared_ptr_standard();
-    shared_ptr_multi();
-    shared_ptr_and_unique_ptr();
-    shared_ptr_and_heap();
-
-    return 0;
-}
 
 void shared_ptr_standard() {
     printf("\nshared_ptr_standard():\n");
@@ -80,14 +68,14 @@ void shared_ptr_multi() {
 void shared_ptr_and_unique_ptr() {
     printf("\nshared_ptr_and_unique_ptr():\n");
 
-    printf("  - creating b\n");
+    printf("  - creating c\n");
     TestClass *c = new TestClass{'c'};
 
     printf("  - creating unique from c\n");
     std::unique_ptr<TestClass> unique{c};
 
     // a shared pointer
-    printf("  - creating shared from unique\n");
+    printf("  - creating shared from unique with std::move\n");
     std::shared_ptr<TestClass> shared{std::move(unique)};
 
     // unique is now a void pointer, this should crash
@@ -114,4 +102,13 @@ void shared_ptr_and_heap() {
     printf("  - deleting shared2\n");
     delete shared2;
     // c is now deleted
+}
+
+int main() {
+    shared_ptr_standard();
+    shared_ptr_multi();
+    shared_ptr_and_unique_ptr();
+    shared_ptr_and_heap();
+
+    return 0;
 }
