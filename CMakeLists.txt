@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(public_sandbox)
+project(public_sandbox C CXX ASM)
 
 set(CMAKE_CXX_STANDARD 11)
 

@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void rawString() {
+int main() {
     cout << "standard literal" << endl;
     // standard string literal
 

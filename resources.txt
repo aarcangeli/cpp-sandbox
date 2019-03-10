@@ -1,0 +1,6 @@
+[multithreading]
+https://www.acodersjourney.com/top-20-cplusplus-multithreading-mistakes/
+https://stackoverflow.com/a/14925150/1119279 pthread
+
+[asm]
+http://lallouslab.net/2016/01/11/introduction-to-writing-x64-assembly-in-visual-studio/

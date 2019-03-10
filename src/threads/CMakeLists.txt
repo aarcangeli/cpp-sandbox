@@ -1,1 +1,2 @@
-add_executable(async async.cpp)
+add_subdirectory(pthread)
+add_subdirectory(std)
