@@ -32,9 +32,15 @@ int main() {
     hex_print(u8str);
     cout << endl;
 
-    // however it doesn't work with surrogate pairs?????
+    // However it doesn't work with surrogate pairs?????
+    // Expected result: F0 9F 80 84
+    // Msvc 2017: ed a0 bc ed b0 84 (FAIL)
+    // MinGW: Cannot convert a surrogate pair: wstring_convert::to_bytes (FAIL)
+    // clang: f0 9f 80 84 (OK)
+    // gcc: f0 9f 80 84 (OK)
     try {
-        wstr = L"\U00101234";
+        // http://www.fileformat.info/info/unicode/char/1f004/index.htm
+        wstr = L"\U0001F004";
         printWChars(wstr);
         cout << "UTF-8 from string with surrogate: ";
         u8str = conv1.to_bytes(wstr);
@@ -43,6 +49,4 @@ int main() {
         cout << "Cannot convert a surrogate pair: " << e.what() << endl;
     }
     cout << endl;
-    // on msvc 2017: ed af 84 ed b8 b4
-    // on MinGW: Cannot convert a surrogate pair: wstring_convert::to_bytes
 }
