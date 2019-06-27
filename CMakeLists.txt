@@ -8,4 +8,5 @@ if (MINGW)
     set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
 endif ()
 
-add_subdirectory(src)
+add_subdirectory(cmake)
+add_subdirectory(cpp)
