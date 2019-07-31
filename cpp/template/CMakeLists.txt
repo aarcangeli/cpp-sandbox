@@ -1,0 +1,2 @@
+add_executable(template_trait template_trait.cpp)
+add_executable(template_typeid template_typeid.cpp)

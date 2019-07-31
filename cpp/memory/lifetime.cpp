@@ -5,7 +5,7 @@ class Integer {
     const int number;
 
 public:
-    Integer() : number(0) { printf("z  [%08Xh] Integer::Integer()\n", (size_t) this); }
+    Integer() : number(0) { printf("z  [%08zXh] Integer::Integer()\n", (size_t) this); }
     Integer(int number) : number(number) { printf("  [%08zXh] Integer::Integer(int)\n", (size_t) this); }
 
     Integer(Integer &copy) : number(copy.number) { printf("  [%08zXh] Integer::Integer(Integer&)\n", (size_t) this); }
