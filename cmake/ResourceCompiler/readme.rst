@@ -45,3 +45,6 @@ Actual star.png.cpp is generated at build time with the following format:
         const char* star = star_array;
         const char* star_end = star_array + sizeof(star_array);
     }
+
+Credits:
+    Alessandro Arcangeli <alessandroarcangeli.rm@gmail.com>
