@@ -2,7 +2,6 @@
 #include <d3dcompiler.h>
 #include <utils/string_sprintf.h>
 #include <vector>
-#include <windows.h>
 
 const char *PROG_NAME = "D3D11";
 [[noreturn]] void die(const char *error);
@@ -176,7 +175,7 @@ public:
                             0, &shader, &error);
 
     if (FAILED(hr)) {
-      printf("Cannot compile shader:\n %s\n", error->GetBufferPointer());
+      printf("Cannot compile shader:\n %s\n", (char*) error->GetBufferPointer());
       die(string_sprintf("Cannot compile shader: %s", error->GetBufferPointer())
               .c_str());
     }
@@ -301,9 +300,9 @@ void render() {
   };
 
   static MyBuffer<Vertex> buffer{{
-      {.x = -1.0f, -1.0f, 0.5f, .r = 1.0f, 0.0f, 0.0f},
-      {.x =  0.0f,  1.0f, 0.5f, .r = 0.0f, 1.0f, 0.0f},
-      {.x =  1.0f, -1.0f, 0.5f, .r = 0.0f, 0.0f, 1.0f},
+      {-1.0f, -1.0f, 0.5f, 1.0f, 0.0f, 0.0f},
+      { 0.0f,  1.0f, 0.5f, 0.0f, 1.0f, 0.0f},
+      { 1.0f, -1.0f, 0.5f, 0.0f, 0.0f, 1.0f},
   }};
 
   context->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
