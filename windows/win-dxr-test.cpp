@@ -11,7 +11,8 @@ void initD3D12(HWND hwnd);
 const int width = 1280;
 const int height = 720;
 ID3D12Device *pDevice;
-ID3D12GraphicsCommandList *pCmdAllocator;
+ID3D12CommandAllocator *pCmdAllocator;
+ID3D12GraphicsCommandList *pCmdList;
 
 int main() {
     HWND pHwnd = initWindow();
@@ -93,12 +94,15 @@ void initD3D12(HWND hwnd) {
     // Creates command list allocator
     hr = pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&pCmdAllocator));
     if (FAILED(hr)) {
-        // crash -.-
-        die("Cannot create command list");
+        die("Cannot create command list allocator 0x%lx");
     }
 
     // Create command list that support ray tracing
-    //pDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, pCmdAllocator)
+    hr = pDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, pCmdAllocator, nullptr, IID_PPV_ARGS(&pCmdList));
+    if (FAILED(hr)) {
+        die("Cannot create command list 0x%lx");
+    }
+
 }
 
 void die(const char *error) {
