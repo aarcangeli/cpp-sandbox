@@ -1,3 +1,5 @@
+// sandbox, not working
+
 #include <windows.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -32,13 +34,15 @@ const int g_NumFrames = 3;
 HWND g_hWnd;
 IDXGIFactory4 *pFactory;
 ID3D12CommandQueue *pCommandQueue;
-ID3D12Device *pDevice;
+ID3D12Device *g_Device;
 ID3D12CommandAllocator *pCmdAllocator;
-ID3D12GraphicsCommandList *pCmdList;
+ID3D12GraphicsCommandList *g_CommandList;
 IDXGISwapChain1 *pSwapChain;
 ID3D12Resource *g_BackBuffers[g_NumFrames];
 ID3D12CommandAllocator *g_CommandAllocators[g_NumFrames];
 ID3D12DescriptorHeap *g_RTVDescriptorHeap;
+IDXGISwapChain4 *g_SwapChain;
+UINT g_CurrentBackBufferIndex;
 
 int main() {
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
@@ -145,11 +149,30 @@ HWND initWindow() {
 }
 
 void Resize(int width, int height) {
+    ID3D12CommandAllocator *commandAllocator = g_CommandAllocators[g_CurrentBackBufferIndex];
+    ID3D12Resource *backBuffer = g_BackBuffers[g_CurrentBackBufferIndex];
+
+    commandAllocator->Reset();
+    g_CommandList->Reset(commandAllocator, nullptr);
+
+    // Clear the render target.
+//    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_PRESENT,
+//                                                                            D3D12_RESOURCE_STATE_RENDER_TARGET);
+//
+//    g_CommandList->ResourceBarrier();
+    UINT g_RTVDescriptorSize = g_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv{
+            g_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart().ptr +
+            g_CurrentBackBufferIndex * g_RTVDescriptorSize};
+
+    FLOAT clearColor[] = {0.4f, 0.6f, 0.9f, 1.0f};
+    g_CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 }
 
 ID3D12CommandAllocator *CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE type) {
     ID3D12CommandAllocator *commandAllocator;
-    if (FAILED(pDevice->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator)))) {
+    if (FAILED(g_Device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator)))) {
         die("Cannot create command allocator");
     }
     return commandAllocator;
@@ -157,14 +180,14 @@ ID3D12CommandAllocator *CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE type) {
 
 void initD3D12() {
     // Create D3D12
-    HRESULT hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&pDevice));
+    HRESULT hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&g_Device));
     if (FAILED(hr)) {
         die("Cannot create D3D12");
     }
 
 #if defined(_DEBUG)
     ID3D12InfoQueue *pInfoQueue;
-    if (SUCCEEDED(pDevice->QueryInterface(IID_PPV_ARGS(&pInfoQueue)))) {
+    if (SUCCEEDED(g_Device->QueryInterface(IID_PPV_ARGS(&pInfoQueue)))) {
         printf("Enabling debug messages\n");
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
@@ -196,19 +219,20 @@ void initD3D12() {
 
     // Check if ray is supported by the system
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 caps = {};
-    hr = pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &caps, sizeof(caps));
+    hr = g_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &caps, sizeof(caps));
     if (FAILED(hr) || caps.RaytracingTier < D3D12_RAYTRACING_TIER_1_0) {
         die("DXR is not supported in this device");
     }
 
     // Creates command list allocator
-    hr = pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&pCmdAllocator));
+    hr = g_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&pCmdAllocator));
     if (FAILED(hr)) {
         die("Cannot create command list allocator 0x%lx");
     }
 
     // Create command list that support ray tracing
-    hr = pDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, pCmdAllocator, nullptr, IID_PPV_ARGS(&pCmdList));
+    hr = g_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, pCmdAllocator, nullptr,
+                                     IID_PPV_ARGS(&g_CommandList));
     if (FAILED(hr)) {
         die("Cannot create command list");
     }
@@ -219,7 +243,7 @@ void initD3D12() {
     desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
     desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     desc.NodeMask = 0;
-    hr = pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&pCommandQueue));
+    hr = g_Device->CreateCommandQueue(&desc, IID_PPV_ARGS(&pCommandQueue));
     if (FAILED(hr)) {
         die("Cannot create command queue");
     }
@@ -246,6 +270,9 @@ void initD3D12() {
     if (FAILED(hr)) {
         die("Cannot create swap chain");
     }
+    if (FAILED(pSwapChain->QueryInterface(IID_PPV_ARGS(&g_SwapChain)))) {
+        die("Cannot get IDXGISwapChain4");
+    }
 
     g_RTVDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, g_NumFrames);
 
@@ -255,6 +282,7 @@ void initD3D12() {
         g_CommandAllocator = CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT);
     }
 
+    g_CurrentBackBufferIndex = g_SwapChain->GetCurrentBackBufferIndex();
 }
 
 bool CheckTearingSupport() {
@@ -277,7 +305,7 @@ bool CheckTearingSupport() {
 
 ID3D12Fence *CreateFence() {
     ID3D12Fence *Fence;
-    if (FAILED(pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence)))) {
+    if (FAILED(g_Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence)))) {
         die("Cannot create Fence");
     }
     return Fence;
@@ -286,7 +314,7 @@ ID3D12Fence *CreateFence() {
 void UpdateRenderTargetViews() {
     HRESULT hr;
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = g_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-    auto rtvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    auto rtvDescriptorSize = g_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     for (int i = 0; i < g_NumFrames; ++i) {
         ID3D12Resource *backBuffer;
@@ -294,7 +322,7 @@ void UpdateRenderTargetViews() {
         if (FAILED(hr)) {
             die("pSwapChain->GetBuffer");
         }
-        pDevice->CreateRenderTargetView(backBuffer, nullptr, rtvHandle);
+        g_Device->CreateRenderTargetView(backBuffer, nullptr, rtvHandle);
         g_BackBuffers[i] = backBuffer;
         rtvHandle.ptr += rtvDescriptorSize;
     }
@@ -306,7 +334,7 @@ ID3D12DescriptorHeap *CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, int 
     desc.Type = type;
 
     ID3D12DescriptorHeap *descriptorHeap;
-    if (FAILED(pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)))) {
+    if (FAILED(g_Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)))) {
         die("Cannot Create Descriptor Heap");
     }
 
