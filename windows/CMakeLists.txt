@@ -9,3 +9,4 @@ target_link_libraries(win-d3d11 "D3D11.lib")
 target_link_libraries(win-d3d11 "d3dcompiler.lib")
 
 target_link_libraries(win-dxr-test "D3D12.lib")
+target_link_libraries(win-dxr-test "DXGI.lib")
